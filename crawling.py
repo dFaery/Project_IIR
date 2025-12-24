@@ -46,9 +46,9 @@ def get_author_profile_url(author_name):
     for link in author_links:
         if author_name.lower() in link.text.lower():
             driver.get(link.get_attribute("href"))
-            return author_links
+            return True            
         
-    return None
+    return False
         
 
 # fungsi yang dijalankan saat load awal
@@ -97,9 +97,15 @@ if params_author:
     onLoad()
     # cari link profile author
     # NOTE DI SINI BISA AJA GADA AUTHOR SAMA SEKALI YG COCOK, JADI HARUSNYA DIBUAT HANDLE ERROR NYA
-    author_links = get_author_profile_url(params_author)
-    if(author_links is None):
-        print("Author tidak ditemukan")
+    author_found = get_author_profile_url(params_author)
+    if not author_found:
+        error_response = {
+            "status": "error",
+            "message": "Author tidak ditemukan"
+        }
+        print(json.dumps(error_response))
+        driver.quit()
+        sys.exit(0)
 
 # cari artikel dari author yg udh dipilih & batasi sesuai params_limit
 selector_articles_links = []
@@ -196,6 +202,9 @@ df_sorted = df.sort_values(by='similarity', ascending=False)
 
 # konversi dataframe ke list of dict
 result = df_sorted.to_dict(orient='records')
-
+result = {
+    "status": "success",
+    "data": result
+}
 # kirim sebagai JSON
 print(json.dumps(result))
