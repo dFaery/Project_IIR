@@ -25,6 +25,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # lainnya
 import pandas as pd
+import json
 
 # buat bikin URL Google Scholar untuk pencarian author menggunakan advaced search
 def build_google_scholar_url(author):
@@ -44,21 +45,17 @@ def get_author_profile_url(author_name):
 
     for link in author_links:
         if author_name.lower() in link.text.lower():
-            # print("(SYSTEM) FOUND AUTHOR PROFILE LINK:", link.get_attribute("href"))
             driver.get(link.get_attribute("href"))
-            break
+            return author_links
         
-    return author_links
+    return None
+        
 
 # fungsi yang dijalankan saat load awal
 def onLoad():
-    # print("(SYSTEM) INITIAL URL:",initial_url)
     driver.get(initial_url)
-    # print("(SYSTEM) MINIMIZING WINDOW...")
     driver.minimize_window() # biar UI nya clean aja
     import time
-    # print("(SYSTEM) WAITING 10 SECONDS BEFORE SCRAPING...")
-    # time.sleep(10)
      
 def preprocessing_text(title):
     # ubah ke lowercase
@@ -82,10 +79,9 @@ def preprocessing_text(title):
     return ' '.join(clean_tokens)
 
 
+# parameter dari index.php
 params_keyword = sys.argv[1]
-# params_keyword = "evaluation of engine performance" #pakai dummy dulu biar gampang testing
 params_author  = sys.argv[2]
-# params_author  = "Joko siswantoro" #pakai dummy dulu biar gampang testing
 params_limit   = int(sys.argv[3])
 
 chrm_ops = webdriver.ChromeOptions()
@@ -102,9 +98,10 @@ if params_author:
     # cari link profile author
     # NOTE DI SINI BISA AJA GADA AUTHOR SAMA SEKALI YG COCOK, JADI HARUSNYA DIBUAT HANDLE ERROR NYA
     author_links = get_author_profile_url(params_author)
+    if(author_links is None):
+        print("Author tidak ditemukan")
 
 # cari artikel dari author yg udh dipilih & batasi sesuai params_limit
-
 selector_articles_links = []
 i = 0
 for link_article in driver.find_elements(By.CSS_SELECTOR, 'tr.gsc_a_tr'):
@@ -113,6 +110,7 @@ for link_article in driver.find_elements(By.CSS_SELECTOR, 'tr.gsc_a_tr'):
     title = link_article.find_element(By.CSS_SELECTOR, 'a.gsc_a_at').text
     detail_link = link_article.find_element(By.CSS_SELECTOR, 'a.gsc_a_at').get_attribute('href')
 
+    # simpan ke list 
     selector_articles_links.append({
         'title': title,
         'detail_link': detail_link
@@ -124,13 +122,15 @@ articles_detail = []
 for article in selector_articles_links:
     driver.get(article['detail_link'])
 
+    # dari struktur div yg ada, google scholar membuat div.gs_scl untuk setiap informasi detail
+    # jadi kita cari semua div.gs_scl, kemudian kita menemukan bahwa di dalamnya ada label dan value
     fields = driver.find_elements(By.CSS_SELECTOR, "div.gs_scl")    
 
+    # untuk judul artikel dan link jurnal, diambil terpisah karena strukturnya beda
     judul_artikel = driver.find_element(By.CSS_SELECTOR, "a.gsc_oci_title_link").text
-
     link_jurnal = driver.find_element(By.CSS_SELECTOR, "#gsc_oci_title a.gsc_oci_title_link").get_attribute("href")
 
-
+    # siapkan dict untuk nyimpen data
     data = {
         "judul_artikel": judul_artikel,
         "penulis": None,
@@ -146,6 +146,7 @@ for article in selector_articles_links:
         label = field.find_element(By.CSS_SELECTOR, ".gsc_oci_field").text.lower()
         value = field.find_element(By.CSS_SELECTOR, ".gsc_oci_value").text
         
+        # cek perlabelan untuk dimasukkan ke data
         if "authors" in label:
             data["penulis"] = value
         elif "publication date" in label:
@@ -162,12 +163,9 @@ for article in selector_articles_links:
     
 # simpan ke dataframe pandas
 df = pd.DataFrame(articles_detail)
-# print(df.head())
 
 # preprocessing judul artikel
 df['preprocessing_judul_artikel'] = df['judul_artikel'].apply(preprocessing_text)
-
-# print(df[['judul_artikel', 'preprocessing_judul_artikel']].head())
 
 # hitung TF-IDF
 # gunakan norm='l2' untuk menormalkan vektor TF-IDF agar perhitungan cosine similarity tidak dipengaruhi panjang teks
@@ -184,10 +182,7 @@ vector_tfidf = tfidf.fit_transform(df['preprocessing_judul_artikel'])
 preprocessed_keyword = preprocessing_text(params_keyword)
 vector_keyword = tfidf.transform([preprocessed_keyword])
 
-# print("PREPROCESSED KEYWORD:", preprocessed_keyword)
-
 # implementasi cosine similarity
-# print("CALCULATING COSINE SIMILARITY...")
 similarity_scores = []
 
 for i in range(vector_tfidf.shape[0]):
@@ -195,7 +190,6 @@ for i in range(vector_tfidf.shape[0]):
     similarity_scores.append(similarity)
     
 df['similarity'] = similarity_scores
-# print(df[['judul_artikel', 'similarity']].head())
 
 # sorting result berdasarkan similarity
 df_sorted = df.sort_values(by='similarity', ascending=False)
@@ -203,6 +197,5 @@ df_sorted = df.sort_values(by='similarity', ascending=False)
 # konversi dataframe ke list of dict
 result = df_sorted.to_dict(orient='records')
 
-import json
 # kirim sebagai JSON
 print(json.dumps(result))

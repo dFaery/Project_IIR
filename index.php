@@ -6,14 +6,12 @@
     <title>Pencarian Data Artikel Ilmiah</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* RESET SEDERHANA */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-        /* BODY */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #eef2f7, #d9e4f5);
@@ -24,7 +22,6 @@
             padding: 20px;
         }
 
-        /* CONTAINER */
         .container {
             width: 100%;
             max-width: 440px;
@@ -35,7 +32,6 @@
             animation: fadeIn 0.6s ease-in-out;
         }
 
-        /* ANIMASI MASUK */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -48,7 +44,6 @@
             }
         }
 
-        /* JUDUL */
         h2 {
             text-align: center;
             margin-bottom: 30px;
@@ -57,21 +52,18 @@
             color: #2c3e50;
         }
 
-        /* FORM GROUP */
         .form-group {
             display: flex;
             flex-direction: column;
             margin-bottom: 18px;
         }
 
-        /* LABEL */
         label {
             font-size: 13px;
             margin-bottom: 6px;
             color: #555;
         }
 
-        /* INPUT */
         input {
             padding: 10px 12px;
             font-size: 14px;
@@ -80,14 +72,12 @@
             transition: all 0.25s ease;
         }
 
-        /* FOCUS INPUT */
         input:focus {
             outline: none;
             border-color: #4a90e2;
             box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
         }
 
-        /* BUTTON */
         button {
             margin-top: 25px;
             padding: 12px;
@@ -102,26 +92,22 @@
             transition: all 0.3s ease;
         }
 
-        /* HOVER BUTTON */
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 18px rgba(74, 144, 226, 0.4);
         }
 
-        /* ACTIVE BUTTON */
         button:active {
             transform: translateY(0);
             box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
         }
 
-        /* OUTPUT */
         #output {
             margin-top: 20px;
             font-size: 14px;
             color: #333;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 480px) {
             h2 {
                 font-size: 18px;

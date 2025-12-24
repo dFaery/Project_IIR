@@ -19,11 +19,8 @@ if (isset($_GET['submit'])) {
     // parameter true ini merubah jadi array
     $data = json_decode($json, true);
 
-    // validasi proses decode
-    if ($data === null) {
-        echo "<pre>ERROR JSON:\n$json</pre>";
-        exit;
-    }
+    $status = $data['status'] ?? 'OK';
+    $rows = $data['data'] ?? [];    
 }
 ?>
 <!DOCTYPE html>
@@ -33,14 +30,12 @@ if (isset($_GET['submit'])) {
     <meta charset="UTF-8">
     <title>Hasil Pencarian</title>
     <style>
-        /* RESET */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-        /* BODY */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #eef2f7, #d9e4f5);
@@ -49,7 +44,6 @@ if (isset($_GET['submit'])) {
             color: #2c3e50;
         }
 
-        /* CONTAINER */
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -60,7 +54,6 @@ if (isset($_GET['submit'])) {
             animation: fadeIn 0.6s ease-in-out;
         }
 
-        /* ANIMASI */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -73,7 +66,6 @@ if (isset($_GET['submit'])) {
             }
         }
 
-        /* BACK BUTTON */
         .btn-back {
             display: inline-flex;
             align-items: center;
@@ -95,25 +87,21 @@ if (isset($_GET['submit'])) {
             transition: all 0.3s ease;
         }
 
-        /* HOVER */
         .btn-back:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 18px rgba(74, 144, 226, 0.4);
         }
 
-        /* ACTIVE */
         .btn-back:active {
             transform: translateY(0);
             box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
         }
 
-        /* FOCUS (AKSESIBILITAS) */
         .btn-back:focus {
             outline: none;
             box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.25);
         }
 
-        /* INFO BOX */
         .info {
             background-color: #f6f9fd;
             border-left: 4px solid #4a90e2;
@@ -132,19 +120,16 @@ if (isset($_GET['submit'])) {
             font-weight: 600;
         }
 
-        /* JUDUL */
         h3 {
             font-size: 18px;
             margin-bottom: 12px;
             color: #2c3e50;
         }
 
-        /* TABLE WRAPPER (RESPONSIVE) */
         .table-wrapper {
             overflow-x: auto;
         }
 
-        /* TABLE */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -152,7 +137,6 @@ if (isset($_GET['submit'])) {
             margin-top: 10px;
         }
 
-        /* HEADER */
         thead {
             background-color: #f0f4fa;
         }
@@ -166,19 +150,16 @@ if (isset($_GET['submit'])) {
             white-space: nowrap;
         }
 
-        /* BODY */
         td {
             padding: 10px 12px;
             border-bottom: 1px solid #e6eaf0;
             vertical-align: top;
         }
 
-        /* ROW HOVER */
         tbody tr:hover {
             background-color: #f7faff;
         }
 
-        /* LINK */
         a {
             color: #4a90e2;
             text-decoration: none;
@@ -189,7 +170,6 @@ if (isset($_GET['submit'])) {
             text-decoration: underline;
         }
 
-        /* EMPTY STATE */
         tbody td[colspan] {
             text-align: center;
             padding: 20px;
@@ -197,7 +177,6 @@ if (isset($_GET['submit'])) {
             color: #777;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 768px) {
             h3 {
                 font-size: 16px;
@@ -244,12 +223,13 @@ if (isset($_GET['submit'])) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (count($data) === 0): ?>
+                    <!-- variable data didapat dari hasil decode json -->
+                    <?php if ($status === "Author tidak ditemukan" || count($rows) === 0): ?>
                         <tr>
-                            <td colspan="8">Data tidak ditemukan</td>
+                            <td colspan="8">Author tidak ditemukan</td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($data as $i => $row): ?>
+                        <?php foreach ($rows as $i => $row): ?>
                             <tr>
                                 <td><?= $i + 1 ?></td>
                                 <td><?= htmlspecialchars($row['judul_artikel']) ?></td>
@@ -258,7 +238,9 @@ if (isset($_GET['submit'])) {
                                 <td><?= htmlspecialchars($row['nama_jurnal']) ?></td>
                                 <td><?= htmlspecialchars($row['sitasi']) ?></td>
                                 <td>
-                                    <a href="<?= htmlspecialchars($row['link_jurnal']) ?>" target="_blank"><?= htmlspecialchars($row['link_jurnal']) ?></a>
+                                    <a href="<?= htmlspecialchars($row['link_jurnal']) ?>" target="_blank">
+                                        <?= htmlspecialchars($row['link_jurnal']) ?>
+                                    </a>
                                 </td>
                                 <td><?= htmlspecialchars($row['similarity']) ?></td>
                             </tr>
