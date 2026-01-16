@@ -10,11 +10,19 @@ import sys
 # buat preprocessing
 import re #untuk menghapus tanda baca
 import nltk 
+
+# deteksi input bahasa dr user
+from googletrans import Translator
+from langdetect import detect, LangDetectException
+
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-nltk.download('punkt')
-nltk.download('punkt_tab')
-nltk.download('stopwords')
+from urllib.parse import unquote_plus
+
+# di download 1x
+# nltk.download('punkt')
+# nltk.download('punkt_tab')
+# nltk.download('stopwords')
 
 # buat itung TF-IDF
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -54,20 +62,37 @@ def get_author_profile_url(author_name):
 # fungsi yang dijalankan saat load awal
 def onLoad():
     driver.get(initial_url)
-    driver.minimize_window() # biar UI nya clean aja
-    import time
+    driver.minimize_window() # biar UI nya clean aja    
      
-def preprocessing_text(title):
+     
+# fungsi deteksi bahasa
+def detect_language(text):
+    try:
+        return detect(text)
+    except LangDetectException:
+        return "en"
+    
+# list stop words
+stop_words_mapping = {
+    "en": set(stopwords.words('english')),
+    "id": set(stopwords.words('indonesian'))
+}
+
+def preprocessing_text(title, lang='en'):    
     # ubah ke lowercase
     title = title.lower()
     
+    # decode URL encoding
+    title = unquote_plus(title)
+    
     # hapus tanda baca
-    title = re.sub(r'[^\w\s]', ' ', title)
+    title = re.sub(r'[^\w\s]', ' ', title)             
 
+    # terjemahkan ke inggris jika bukan inggris
     tokens = word_tokenize(title)
     
-    # hapus stop words yang inggris
-    stop_words = set(stopwords.words('english'))
+    # stopwords sesuai bahasa, kalau bahasanya nggak dikenali default ke english
+    stop_words = stop_words_mapping.get(lang, stop_words_mapping["en"])
 
     clean_tokens = []
     
@@ -78,7 +103,11 @@ def preprocessing_text(title):
 
     return ' '.join(clean_tokens)
 
+def preprocess_with_lang(text):
+    lang = detect_language(text)
+    return preprocessing_text(text, lang)
 
+#region BUILD_URL
 # parameter dari index.php
 params_keyword = sys.argv[1]
 params_author  = sys.argv[2]
@@ -107,6 +136,9 @@ if params_author:
         driver.quit()
         sys.exit(0)
 
+#endregion
+
+#region GET_DATA_ARTICLES
 # cari artikel dari author yg udh dipilih & batasi sesuai params_limit
 selector_articles_links = []
 i = 0
@@ -169,10 +201,14 @@ for article in selector_articles_links:
     
 # simpan ke dataframe pandas
 df = pd.DataFrame(articles_detail)
+#endregion
 
+#region PREPROCESSING_JUDUL_ARTIKEL
 # preprocessing judul artikel
-df['preprocessing_judul_artikel'] = df['judul_artikel'].apply(preprocessing_text)
+df['preprocessing_judul_artikel'] = df['judul_artikel'].apply(preprocess_with_lang)
+# endregion
 
+#region FEATURE_WEIGHTING
 # hitung TF-IDF
 # gunakan norm='l2' untuk menormalkan vektor TF-IDF agar perhitungan cosine similarity tidak dipengaruhi panjang teks
 # Parameter norm='l2' digunakan untuk melakukan normalisasi vektor TF-IDF 
@@ -185,9 +221,12 @@ tfidf = TfidfVectorizer(norm='l2', sublinear_tf=True)
 vector_tfidf = tfidf.fit_transform(df['preprocessing_judul_artikel'])
 
 # preprocessing keyword
-preprocessed_keyword = preprocessing_text(params_keyword)
+keyword_lang = detect_language(params_keyword)
+preprocessed_keyword = preprocessing_text(params_keyword, lang=keyword_lang)
 vector_keyword = tfidf.transform([preprocessed_keyword])
+#endregion
 
+#region SIMILARITY_COMPUTATION
 # implementasi cosine similarity
 similarity_scores = []
 
@@ -196,7 +235,9 @@ for i in range(vector_tfidf.shape[0]):
     similarity_scores.append(similarity)
     
 df['similarity'] = similarity_scores
+#endregion
 
+#region PREPARE_SEND_DATA
 # sorting result berdasarkan similarity
 df_sorted = df.sort_values(by='similarity', ascending=False)
 
@@ -206,5 +247,7 @@ result = {
     "status": "success",
     "data": result
 }
+#endregion
+
 # kirim sebagai JSON
 print(json.dumps(result))
