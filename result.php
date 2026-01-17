@@ -231,7 +231,7 @@ if (isset($_GET['submit'])) {
                     <!-- variable data didapat dari hasil decode json -->
                     <?php if ($status === "error" || count($rows) === 0): ?>
                         <tr>
-                            <td colspan="8">Author tidak ditemukan</td>
+                            <td colspan="8"><?= htmlspecialchars($data['message']); ?></td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($rows as $i => $row): ?>

@@ -206,6 +206,9 @@ df = pd.DataFrame(articles_detail)
 #region PREPROCESSING_JUDUL_ARTIKEL
 # preprocessing judul artikel
 df['preprocessing_judul_artikel'] = df['judul_artikel'].apply(preprocess_with_lang)
+# preprocessing keyword
+keyword_lang = detect_language(params_keyword)
+preprocessed_keyword = preprocessing_text(params_keyword, lang=keyword_lang)
 # endregion
 
 #region FEATURE_WEIGHTING
@@ -220,9 +223,6 @@ tfidf = TfidfVectorizer(norm='l2', sublinear_tf=True)
 # fit transform
 vector_tfidf = tfidf.fit_transform(df['preprocessing_judul_artikel'])
 
-# preprocessing keyword
-keyword_lang = detect_language(params_keyword)
-preprocessed_keyword = preprocessing_text(params_keyword, lang=keyword_lang)
 vector_keyword = tfidf.transform([preprocessed_keyword])
 #endregion
 
