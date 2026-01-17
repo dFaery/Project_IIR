@@ -12,7 +12,7 @@ import re #untuk menghapus tanda baca
 import nltk 
 
 # deteksi input bahasa dr user
-from googletrans import Translator
+# from googletrans import Translator
 from langdetect import detect, LangDetectException
 
 from nltk.corpus import stopwords
@@ -20,9 +20,9 @@ from nltk.tokenize import word_tokenize
 from urllib.parse import unquote_plus
 
 # di download 1x
-# nltk.download('punkt')
-# nltk.download('punkt_tab')
-# nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
 
 # buat itung TF-IDF
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -54,7 +54,7 @@ def get_author_profile_url(author_name):
     for link in author_links:
         if author_name.lower() in link.text.lower():
             driver.get(link.get_attribute("href"))
-            return True            
+            return True             
         
     return False
         

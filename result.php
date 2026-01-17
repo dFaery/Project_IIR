@@ -8,8 +8,13 @@ if (isset($_GET['submit'])) {
     $limit = escapeshellarg($_GET['limit']);
 
     // php nggak mengenal venv, makannya path python.exe hrs ditulis scr explisit biar library" itu bisa dipakai
-    $python = __DIR__ . "/venv/Scripts/python.exe";
+    $venvPython = __DIR__ . "/venv/Scripts/python.exe";
 
+    if (file_exists($venvPython)) {
+        $python = $venvPython;
+    } else {
+        $python = "python";
+    }    
     // parameter pertama itu buat nentuin pakai interpreter python yg mana
     // parameter kedua file yg dipakai
     // parameter ketiga, keempat, dan kelima itu input dari user
@@ -20,7 +25,7 @@ if (isset($_GET['submit'])) {
     $data = json_decode($json, true);
 
     $status = $data['status'] ?? 'OK';
-    $rows = $data['data'] ?? [];    
+    $rows = $data['data'] ?? [];
 }
 ?>
 <!DOCTYPE html>
@@ -224,7 +229,7 @@ if (isset($_GET['submit'])) {
                 </thead>
                 <tbody>
                     <!-- variable data didapat dari hasil decode json -->
-                    <?php if ($status === "Author tidak ditemukan" || count($rows) === 0): ?>
+                    <?php if ($status === "error" || count($rows) === 0): ?>
                         <tr>
                             <td colspan="8">Author tidak ditemukan</td>
                         </tr>
